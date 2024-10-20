@@ -41,7 +41,7 @@ public unsafe class Plugin : BasePlugin
         {
             oldBytes.Add(ptr[i]);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (isLinux)
             {
                 int nextByte = i + 1;
 

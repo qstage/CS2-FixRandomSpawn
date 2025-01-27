@@ -1,0 +1,4 @@
+.editorconfig
+obj
+bin
+*.sln

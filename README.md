@@ -13,3 +13,16 @@ Fixes ConVar `mp_randomspawn` for any game mode
 - Make a folder in /plugins named /FixRandomSpawn.
 - Put the plugin files in to the new folder.
 - Restart your server.
+
+## Configuration
+`css_randomspawn_reload` - Reload configuration
+```json
+{
+    "warmup_mode": {
+        "enable": false, // Enable the plugin only for warmup time
+        "buy_anywhere": false, // Allow purchase anywhere on the map
+        "alert_for_players": false // Notification for players about the enabled random spawns
+    },
+    "ConfigVersion": 1
+}
+```

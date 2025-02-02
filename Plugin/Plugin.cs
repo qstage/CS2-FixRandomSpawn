@@ -1,11 +1,13 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
 
 namespace FixRandomSpawn;
 
+[MinimumApiVersion(305)]
 public sealed partial class Plugin : BasePlugin
 {
     public override string ModuleName { get; } = "FixRandomSpawn";
-    public override string ModuleVersion { get; } = "1.1.0";
+    public override string ModuleVersion { get; } = "1.1.2";
     public override string ModuleAuthor { get; } = "xstage";
 
     private readonly GameRules gameRules_ = new GameRules();

@@ -15,7 +15,7 @@ public sealed class GameRules
 
         plugin.RegisterListener<Listeners.OnMapStart>(manName =>
         {
-            Server.NextFrame(() =>
+            Server.NextWorldUpdate(() =>
             {
                 FindGameRules();
             });

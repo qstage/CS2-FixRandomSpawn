@@ -9,7 +9,7 @@ namespace FixRandomSpawn;
 public sealed partial class Plugin : BasePlugin
 {
     public override string ModuleName { get; } = "FixRandomSpawn";
-    public override string ModuleVersion { get; } = "1.1.3";
+    public override string ModuleVersion { get; } = "1.1.4";
     public override string ModuleAuthor { get; } = "xstage";
 
     private CCSGameRules _gameRules = null!;

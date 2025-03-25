@@ -5,111 +5,100 @@ using CounterStrikeSharp.API.Modules.Memory;
 
 namespace FixRandomSpawn;
 
+using size_t = nuint;
+
 public unsafe partial class MemoryPatch(string? modulePath = null)
 {
     [LibraryImport("libc", EntryPoint = "mprotect")]
-    private static partial int MProtect(nint address, int len, int protect);
+    private static partial int MProtect(nint addr, size_t len, int protect);
 
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private unsafe static partial bool VirtualProtect(nint address, int dwSize, int newProtect, int* oldProtect);
+    private static partial bool VirtualProtect(nint addr, size_t dwSize, nuint newProtect, nuint* oldProtect);
 
-    private readonly string modulePath_ = modulePath ?? Addresses.ServerPath;
-    private readonly Dictionary<int, List<byte>> oldPattern_ = [];
-    private nint addr_;
-
-    private enum MemoryAccess
+    public enum MemoryAccess
     {
-        Read = 1,
-        Write,
-        Exec = 4
+        Read = 1 << 0,
+        Write = 1 << 1,
+        Exec = 1 << 2
     }
+
+    private readonly string _modulePath = modulePath ?? Addresses.ServerPath;
+    private readonly Dictionary<int, List<byte>> _oldPattern = [];
+    private nint _addr;
 
     private const int PAGE_READONLY = 0x2;
     private const int PAGE_READWRITE = 0x4;
     private const int PAGE_EXECUTE_READ = 0x20;
     private const int PAGE_EXECUTE_READWRITE = 0x40;
-
     private const int PAGESIZE = 4096;
 
     public void Init(string signature)
     {
-        addr_ = NativeAPI.FindSignature(modulePath_, signature);
+        _addr = NativeAPI.FindSignature(_modulePath, signature);
     }
 
     public void Apply(string patchSignature, int offset = 0)
     {
-        if (string.IsNullOrEmpty(patchSignature) || oldPattern_.ContainsKey(offset)) return;
+        if (string.IsNullOrEmpty(patchSignature) || _oldPattern.ContainsKey(offset)) return;
 
-        byte[] bytes = [.. patchSignature.Split(' ').Select(b => byte.Parse(b, NumberStyles.HexNumber))];
-        oldPattern_[offset] = [];
+        byte[] patchPattern = [.. patchSignature.Split(' ').Select(b => byte.Parse(b, NumberStyles.HexNumber))];
+        _oldPattern[offset] = [];
 
-        byte* ptrAddr = GetPtr<byte>(offset);
-        SetMemAccess(ptrAddr, bytes.Length, MemoryAccess.Read | MemoryAccess.Write | MemoryAccess.Exec);
-
-        for (int i = 0; i < bytes.Length; i++)
+        for (int i = 0; i < patchPattern.Length; i++)
         {
-            oldPattern_[offset].Add(ptrAddr[i]);
-            ptrAddr[i] = bytes[i];
+            _oldPattern[offset].Add(Read<byte>(offset + i));
+            Write(patchPattern[i], offset + i);
         }
     }
 
     public void Restore()
     {
-        if (oldPattern_.Count == 0) return;
+        if (_oldPattern.Count == 0) return;
 
-        foreach (var (offset, pattern) in oldPattern_)
+        foreach (var (offset, pattern) in _oldPattern)
         {
-            byte* ptrAddr = GetPtr<byte>(offset);
-            SetMemAccess(ptrAddr, pattern.Count, MemoryAccess.Read | MemoryAccess.Write | MemoryAccess.Exec);
-
             for (int i = 0; i < pattern.Count; i++)
             {
-                ptrAddr[i] = pattern[i];
+                Write(pattern[i], offset + i);
             }
 
-            oldPattern_.Remove(offset);
+            _oldPattern.Remove(offset);
         }
     }
 
     public void Write<T>(T data, int offset = 0) where T: unmanaged
     {
-        T* ptrAddr = GetPtr<T>(offset);
-        SetMemAccess(ptrAddr, sizeof(T), MemoryAccess.Write | MemoryAccess.Read | MemoryAccess.Exec);
-
-        *ptrAddr = data;
+        *GetPtr<T>(offset) = data;
     }
 
     public T Read<T>(int offset = 0) where T: unmanaged
     {
-        T* ptrAddr = GetPtr<T>(offset);
-        SetMemAccess(ptrAddr, sizeof(T), MemoryAccess.Read | MemoryAccess.Exec);
-
-        return *ptrAddr;
+        return *GetPtr<T>(offset);
     }
 
-    private T* GetPtr<T>(int offset = 0) where T: unmanaged
+    public T* GetPtr<T>(int offset = 0) where T: unmanaged
     {
-        return (T*)(addr_ + offset);
+        nint addr = _addr + offset;
+        SetMemAccess(addr, (size_t)sizeof(T));
+
+        return (T*)addr;
     }
 
-    private bool SetMemAccess<T>(T* ptrAddr, int size, MemoryAccess access) where T: unmanaged
+    public static bool SetMemAccess(nint addr, size_t size, MemoryAccess access = MemoryAccess.Write | MemoryAccess.Read | MemoryAccess.Exec)
     {
-        nint addr = (nint)ptrAddr;
-
         if (addr == nint.Zero)
-            throw new ArgumentNullException(nameof(ptrAddr));
-
-        nint LALIGN(nint addr) => addr & ~(PAGESIZE-1);
-        int LALDIF(nint addr) => (int)(addr % PAGESIZE);
+        {
+            throw new ArgumentNullException(nameof(addr));
+        }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return MProtect(LALIGN(addr), size + LALDIF(addr), (int)access) == 0;
         }
 
-        int* oldProtect = stackalloc int[1];
-        int prot = access switch
+        nuint* oldProtect = stackalloc nuint[1];
+        nuint prot = access switch
         {
             MemoryAccess.Read => PAGE_READONLY,
             MemoryAccess.Write => PAGE_READWRITE,
@@ -119,4 +108,8 @@ public unsafe partial class MemoryPatch(string? modulePath = null)
 
         return VirtualProtect(addr, size, prot, oldProtect);
     }
+
+    private static nuint LALDIF(nint addr) => (nuint)addr % PAGESIZE;
+
+    private static nint LALIGN(nint addr) => addr & ~(PAGESIZE - 1);
 }

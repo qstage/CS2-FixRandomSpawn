@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Extensions;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,7 @@ public sealed partial class Plugin : IPluginConfig<PluginConfig>
 {
     public PluginConfig Config { get; set; } = new();
 
+    [RequiresPermissions("@css/root")]
     [ConsoleCommand("css_randomspawn_reload", $"Reload plugin FixRandomSpawn`")]
     public void OnConfigReload(CCSPlayerController? player, CommandInfo info)
     {

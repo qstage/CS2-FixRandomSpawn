@@ -1,6 +1,5 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Modules.Cvars;
 
@@ -8,13 +7,14 @@ namespace FixRandomSpawn;
 
 public sealed partial class Plugin
 {
-    [GameEventHandler]
-    public HookResult OnRoundPrestart(EventRoundPrestart @event, GameEventInfo info)
+    private HookResult OnRoundPrestart(EventRoundPrestart _, GameEventInfo _1) => OnRoundPrestart();
+
+    private HookResult OnRoundPrestart()
     {
         if (!Config.WarmupMode.Enable)
             return HookResult.Continue;
 
-        int value = Convert.ToInt32(gameRules_.Get().WarmupPeriod);
+        int value = Convert.ToInt32(_gameRules.WarmupPeriod);
 
         ConVar[] convars = [
             ConVar.Find("mp_randomspawn")!,
@@ -34,18 +34,24 @@ public sealed partial class Plugin
         return HookResult.Continue;
     }
 
-    [GameEventHandler]
-    public HookResult OnPlayerTeam(EventPlayerTeam @event, GameEventInfo info)
+    private void OnClientPutInServer(int playerSlot)
     {
-        var player = @event.Userid;
+        var player = Utilities.GetPlayerFromSlot(playerSlot);
 
-        if (player == null || @event.Oldteam != 0 || player.IsBot) return HookResult.Continue;
+        if (player == null || player.IsBot) return;
 
-        if (gameRules_.Get().WarmupPeriod && Config.WarmupMode.Enable && Config.WarmupMode.AlertForPlayers)
+        if (_gameRules.WarmupPeriod && Config.WarmupMode.Enable && Config.WarmupMode.AlertForPlayers)
         {
             player.PrintToChat(Localizer.ForPlayer(player, "Plugin.AlertForPlayers"));
         }
+    }
 
-        return HookResult.Continue;
+    private void OnMapStart(string mapName)
+    {
+        Server.NextWorldUpdate(() =>
+        {
+            InitGameRules();
+            OnRoundPrestart();
+        });
     }
 }

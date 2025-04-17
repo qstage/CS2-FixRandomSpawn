@@ -14,7 +14,7 @@ public sealed partial class Plugin
         if (!Config.WarmupMode.Enable)
             return HookResult.Continue;
 
-        int value = Convert.ToInt32(_gameRules.WarmupPeriod);
+        int value = Convert.ToInt32(CSGameRules( ).WarmupPeriod);
 
         ConVar[] convars = [
             ConVar.Find("mp_randomspawn")!,
@@ -40,7 +40,7 @@ public sealed partial class Plugin
 
         if (player == null || player.IsBot) return;
 
-        if (_gameRules.WarmupPeriod && Config.WarmupMode.Enable && Config.WarmupMode.AlertForPlayers)
+        if (CSGameRules( ).WarmupPeriod && Config.WarmupMode.Enable && Config.WarmupMode.AlertForPlayers)
         {
             player.PrintToChat(Localizer.ForPlayer(player, "Plugin.AlertForPlayers"));
         }
@@ -48,10 +48,6 @@ public sealed partial class Plugin
 
     private void OnMapStart(string mapName)
     {
-        Server.NextWorldUpdate(() =>
-        {
-            InitGameRules();
-            OnRoundPrestart();
-        });
+        OnRoundPrestart();
     }
 }

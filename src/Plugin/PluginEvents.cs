@@ -1,5 +1,6 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Modules.Cvars;
 
@@ -7,7 +8,8 @@ namespace FixRandomSpawn;
 
 public sealed partial class Plugin
 {
-    private HookResult OnRoundPrestart(EventRoundPrestart _, GameEventInfo _1) => OnRoundPrestart();
+    [GameEventHandler]
+    public HookResult OnRoundPrestart(EventRoundPrestart _, GameEventInfo _1) => OnRoundPrestart();
 
     private HookResult OnRoundPrestart()
     {
@@ -34,7 +36,8 @@ public sealed partial class Plugin
         return HookResult.Continue;
     }
 
-    private void OnClientPutInServer(int playerSlot)
+    [ListenerHandler<Listeners.OnClientPutInServer>]
+    public void OnClientPutInServer(int playerSlot)
     {
         var player = Utilities.GetPlayerFromSlot(playerSlot);
 
@@ -46,7 +49,8 @@ public sealed partial class Plugin
         }
     }
 
-    private void OnMapStart(string mapName)
+    [ListenerHandler<Listeners.OnMapStart>]
+    public void OnMapStart(string mapName)
     {
         OnRoundPrestart();
     }

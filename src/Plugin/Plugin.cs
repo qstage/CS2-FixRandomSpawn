@@ -4,7 +4,7 @@ using CounterStrikeSharp.API.Core.Attributes;
 
 namespace FixRandomSpawn;
 
-[MinimumApiVersion(305)]
+[MinimumApiVersion(307)]
 public sealed partial class Plugin : BasePlugin
 {
     public override string ModuleName { get; } = "FixRandomSpawn";
@@ -18,16 +18,9 @@ public sealed partial class Plugin : BasePlugin
     {
         _memoryPatch.Init(GameData.GetSignature("EntSelectSpawnPoint"));
         _memoryPatch.Apply(GameData.GetSignature("EntSelectSpawnPoint_Patch1"), GameData.GetOffset("EntSelectSpawnPoint_Patch1"));
-
-        RegisterListener<Listeners.OnMapStart>(OnMapStart);
-        RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
-        RegisterEventHandler<EventRoundPrestart>(OnRoundPrestart);
     }
 
-    public override void Unload(bool hotReload)
-    {
-        _memoryPatch.Restore();
-    }
+    public override void Unload(bool hotReload) => _memoryPatch.Restore();
 
     private static Func<CCSGameRules> CreateGameRulesGetter()
     {

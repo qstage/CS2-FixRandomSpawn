@@ -52,6 +52,6 @@ public sealed partial class Plugin
     [ListenerHandler<Listeners.OnMapStart>]
     public void OnMapStart(string mapName)
     {
-        OnRoundPrestart();
+        Server.NextWorldUpdate(() => OnRoundPrestart());
     }
 }

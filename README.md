@@ -1,9 +1,6 @@
 # CS2-FixRandomSpawn
 Fixes ConVar `mp_randomspawn` for any game mode
 
-> [!CAUTION]
-> The **`without-gamedata`** version does not support  setting ConVar **`mp_randomspawn_los`** and **`mp_randomspawn_dist`**.
-
 ## Requirments
 - [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp/)
 

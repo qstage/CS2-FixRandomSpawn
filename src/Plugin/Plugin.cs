@@ -1,15 +1,13 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Core.Attributes;
 using Microsoft.Extensions.Logging;
 
 namespace FixRandomSpawn;
 
-[MinimumApiVersion(305)]
 public sealed partial class Plugin : BasePlugin
 {
     public override string ModuleName { get; } = "FixRandomSpawn";
-    public override string ModuleVersion { get; } = "1.1.4";
+    public override string ModuleVersion { get; } = "1.2.0";
     public override string ModuleAuthor { get; } = "xstage";
 
     private CCSGameRules _gameRules = null!;
@@ -17,17 +15,15 @@ public sealed partial class Plugin : BasePlugin
     
     public override void Load(bool hotReload)
     {
-        _memoryPatch.Init(GameData.GetSignature("EntSelectSpawnPoint"));
-        _memoryPatch.Apply(GameData.GetSignature("EntSelectSpawnPoint_Patch1"), GameData.GetOffset("EntSelectSpawnPoint_Patch1"));
+        _memoryPatch.Init(GameData.GetSignature("CCSPlayerPawn_EntSelectSpawnPoint"));
+        _memoryPatch.Apply(GameData.GetSignature("CCSPlayerPawn_EntSelectSpawnPoint_Patch"));
 
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
         RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
         RegisterEventHandler<EventRoundPrestart>(OnRoundPrestart);
 
         if (hotReload) 
-        {
             InitGameRules();
-        }
     }
 
     public override void Unload(bool hotReload)
